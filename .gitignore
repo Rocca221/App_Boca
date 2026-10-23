@@ -1,0 +1,31 @@
+# Laravel: dependencies, local configuration and generated files
+/api/vendor/
+/api/.env
+/api/.env.*
+!/api/.env.example
+/api/node_modules/
+/api/public/build/
+/api/public/hot
+/api/storage/*.key
+/api/storage/logs/*.log
+/api/.phpunit.cache/
+/api/.phpunit.result.cache
+/api/auth.json
+
+# Next.js: dependencies, local configuration and generated files
+/web/node_modules/
+/web/.next/
+/web/out/
+/web/.env*
+!/web/.env.example
+/web/.vercel/
+/web/coverage/
+/web/*.tsbuildinfo
+/web/next-env.d.ts
+
+# Editor, operating system and logs
+.DS_Store
+Thumbs.db
+*.log
+*.pem
+.vscode/
