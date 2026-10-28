@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.arque.bocaplayers",
+    "sha256_cert_fingerprints": ["5E:B8:4C:67:C9:B6:FF:EB:2E:93:C2:5A:A7:14:F1:D7:C3:0D:E0:E9:19:FE:59:B6:31:46:6C:89:5C:FE:00:EC"]
+  }
+}]

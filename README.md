@@ -340,3 +340,73 @@ no se incluyan archivos locales, secretos ni carpetas de dependencias.
 - El análisis de dependencias pendiente se detalla en **GitHub y seguridad**.
 - La respuesta personal de la pregunta 5 del informe teórico queda pendiente
   para que la complete la estudiante.
+
+## Despliegue gratuito de la API en Render y conexión con Vercel
+
+La API se empaqueta con Docker usando PHP 8.3, Apache y Laravel 13. Render no
+ofrece PHP como runtime nativo, por eso Docker es necesario para alojar esta
+API Laravel allí. El archivo `render.yaml` usa el plan Free, sin disco
+persistente. Al iniciar, el contenedor copia `api/database/render-seed.db` a
+`/tmp/database.sqlite` solo si esa copia temporal no existe, y aplica
+migraciones pendientes con `php artisan migrate --force`. La copia inicial ya
+contiene los cinco jugadores; no se ejecuta el seeder en cada arranque.
+
+El sistema de archivos de Render Free es temporal: las altas, cambios y bajas
+pueden perderse cuando el servicio se reinicia, se duerme o se redepliega.
+Cuando la base temporal desaparece, el próximo arranque vuelve a crearla desde
+la copia inicial, recuperando los cinco jugadores. Render también puede dormir
+el servicio después de 15 minutos sin tráfico y tardar alrededor de un minuto
+en despertarlo. Es adecuado para una demostración escolar, no para guardar
+cambios ni para producción.
+
+### Configuración visual en Render
+
+1. Revisa los cambios y, cuando decidas autorizarlos, publícalos en el
+   repositorio conectado a Render. No incluyas `.env`, credenciales, `vendor/`
+   ni `node_modules/`. En este proyecto `autoDeploy` está desactivado, así que
+   el cambio en Git no debe iniciar por sí solo un despliegue.
+2. En Render, elige **New +** → **Blueprint** y conecta el repositorio. Revisa
+   que el servicio `boca-players-api` sea **Free**, use Docker desde `api/` y
+   no tenga un disco adjunto. No crees PostgreSQL ni agregues discos.
+3. Render solicitará `APP_KEY`, que debe mantenerse como variable secreta.
+   Genera una clave nueva desde `api/` con `php artisan key:generate --show`;
+   cópiala directamente en Render y no la guardes en el repositorio ni la
+   compartas. El Blueprint deja `APP_DEBUG=false` y configura SQLite en
+   `/tmp/database.sqlite`.
+4. Crea el servicio e inicia su primer despliegue solo cuando estés listo.
+   Cuando Render asigne la URL HTTPS, puedes agregarla como `APP_URL` en
+   **Environment** (por ejemplo, `https://boca-players-api.onrender.com`) y
+   guardar el cambio. No es una credencial.
+5. Comprueba `https://<servicio>.onrender.com/up` y espera a que responda.
+   Luego abre `https://<servicio>.onrender.com/api/jugadores`; la respuesta
+   debe ser HTTP 200 con los cinco registros iniciales.
+
+Si prefieres crear el servicio sin Blueprint: **New +** → **Web Service** →
+selecciona el repositorio; configura **Root Directory** como `api`, **Runtime**
+como Docker, **Instance Type** como Free y confirma que no haya un disco
+adjunto. Agrega las mismas variables de entorno indicadas arriba.
+
+### Conectar Vercel con la API
+
+1. En Vercel, abre el proyecto web y ve a **Settings** → **Environment
+   Variables**.
+2. Define `NEXT_PUBLIC_API_URL` con
+   `https://<servicio>.onrender.com/api` para los entornos que uses
+   (Production y, si corresponde, Preview). El archivo `.env.example` conserva
+   `http://127.0.0.1:8000/api` como valor para desarrollo local.
+3. Guarda el cambio y ejecuta **Redeploy** desde **Deployments**: Next.js
+   incorpora `NEXT_PUBLIC_*` al compilar y no toma el nuevo valor de un build
+   anterior.
+4. Si Render durmió la API, abre primero `/up`, espera a que despierte y vuelve
+   a cargar la página de Vercel. Comprueba el listado y una página de detalle.
+
+El listado y el detalle consultan Laravel desde Server Components de Next.js;
+esas solicitudes servidor-a-servidor no dependen de CORS del navegador. No
+agregues secretos a `NEXT_PUBLIC_*`: su valor es público.
+
+**Advertencia antes de publicar:** las rutas `POST`, `PUT`, `PATCH` y `DELETE`
+de esta API no tienen autenticación. Cualquiera que conozca la URL pública
+podría modificar o borrar jugadores. No uses esta API con datos sensibles ni
+para un servicio real sin acordar e implementar autenticación/autorización.
+En el plan gratuito, cualquier edición de jugadores es temporal y volverá a
+los cinco registros iniciales después de que se reinicie o duerma el servicio.

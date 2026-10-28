@@ -1,0 +1,14 @@
+.git
+.env
+.env.*
+!.env.example
+vendor
+node_modules
+tests
+public/build
+public/hot
+database/*.sqlite*
+database/*.db
+!database/render-seed.db
+storage/logs/*.log
+bootstrap/cache/config.php
